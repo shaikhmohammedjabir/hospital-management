@@ -62,7 +62,7 @@ class Login(Tk):
             #    return user[-1]
                 print(user)
             else:
-                showinfo("authentication error","user not exists please contact to admin")
+                showinfo("authentication error","user or password not match please contact to admin")
         except OperationalError as oe:
             stderr.write(str(oe)+'\n')
         finally:
