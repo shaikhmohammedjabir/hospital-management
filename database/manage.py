@@ -4,12 +4,22 @@ from sys import stderr
 
 class Database:
     def __init__(self):
-        self._database=connect('hospital.db')
-        self._cursor=self._database.cursor()
+        self.database=connect('hospital.db')
+        self.cursor=self.database.cursor()
 
     def getLoginDetail(self,user_name,user_password):
         try:
-            self._cursor.execute(f"select * from user where name={user_name} and password={user_password}")
-            return self._cursor.fetchone()[-1]
+            self.cursor.execute(f"select * from user where name='{user_name}' and password='{user_password}'")
+            user=self.cursor.fetchone()
+            print(user)
+            if user:
+                return user[-1]
+            return None
         except OperationalError as oe:
             stderr.write(str(oe)+'\n')
+
+    def closeDatabase(self):
+        self.cursor.close()
+        self.database.close()
+        return True
+

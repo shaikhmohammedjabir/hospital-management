@@ -1,12 +1,13 @@
 
 from tkinter import Tk,Label,Button,Entry,PhotoImage
+from tkinter.messagebox import showinfo
+from sqlite3 import connect,OperationalError
 from datetime import datetime
-from database.manage import Database
+from sys import stderr
 
 class Login(Tk):
     def __init__(self):
         super().__init__()
-        self.database=Database()
         self.title("hospital login")
         self.iconphoto(True,PhotoImage(file='icon/hospital.png'))
         self.geometry("{x}x{y}+{x}+{y}".format(x=self.winfo_screenwidth()//4,y=self.winfo_screenheight()//4))
@@ -27,11 +28,11 @@ class Login(Tk):
         img=PhotoImage(file='icon/login.png')
         login=Button(self,text="login",image=img,activebackground='green')
         login.grid(row=3, column=1, sticky='E')
-        login.bind('<Button-1>',lambda x:self.authenticate(user_name.get(),password.get()))
-        login.bind('<Button-3>',lambda x: self.authenticate(user_name.get(), password.get()))
+        login.bind('<Button-1>',lambda x:self.authenticate(user_name,password))
+        login.bind('<Button-3>',lambda x: self.authenticate(user_name, password))
 
-        self.bind('<Return>',lambda x:self.authenticate(user_name.get(),password.get()))
-        self.bind('<KP_Enter>',lambda x:self.authenticate(user_name.get(),password.get()))
+        self.bind('<Return>',lambda x:self.authenticate(user_name,password))
+        self.bind('<KP_Enter>',lambda x:self.authenticate(user_name,password))
         self.update(time)
         self.bind('<Escape>',lambda x:self.destroy())
         self.mainloop()
@@ -41,6 +42,20 @@ class Login(Tk):
         time.after(1,lambda:self.update(time))
 
     def authenticate(self,user_name,user_password):
-        print("authentication ",self.database.getLoginDetail(user_name,user_password))
+        database = connect('database/hospital.db')
+        cursor = database.cursor()
+        try:
+            cursor.execute(f"select * from user where name='{user_name.get()}' and password='{user_password.get()}'")
+            user=cursor.fetchone()
+            if user:
+            #    return user[-1]
+                print(user)
+            else:
+                showinfo("authentication error","user not exists please contact to admin")
+        except OperationalError as oe:
+            stderr.write(str(oe)+'\n')
+        finally:
+            cursor.close()
+            database.close()
 
 Login()

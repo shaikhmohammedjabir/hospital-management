@@ -1,2 +1,2 @@
 # hospital-management
-hospital management sytem 
+hospital management sytem
