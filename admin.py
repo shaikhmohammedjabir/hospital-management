@@ -41,11 +41,14 @@ class Admin(Tk):
         self.mainloop()
     class User:
         def __init__(self,frame):
-            Label(frame,text='username',font=',13,').grid(row=0,column=0,ipady=80,ipadx=20)
+            Label(frame,text='username',font=',13,').grid(row=0,column=0)
             user_entry=Entry(frame)
             user_entry.grid(row=0,column=1)
             Label(frame,text='password',font=',13,').grid(row=1,column=0)
             password_entry=Entry(frame,show='*')
             password_entry.grid(row=1,column=1)
+
+    class Database:
+        pass
 
 Admin()
