@@ -83,14 +83,17 @@ class Admin(Tk):
             except IndexError as ie:
                 stderr.write(str(ie)+'\n')
             else:
+                default_value = StringVar()
+                default_value.set('all')
                 table=Treeview(frame,columns=cols,show='headings',height=20)
-                for i,size in zip(cols,[50,240,200,200]):
-                    table.column(i,width=size)
-                    table.heading(i,text=i)
-                # for i in database._Database__getUser(role='*'):
-                #     print(i)
-                table.pack()
+                for value,size in zip(cols,[50,240,300,100]):
+                    table.column(value,width=size)
+                    table.heading(value,text=value)
+                self._Member__updateTable(table, default_value)
+                table.grid(row=0,column=0)
 
+            OptionMenu(frame,default_value,*('all','appointment','doctor')).grid(row=1,column=0,sticky='w')
+            Button(frame,text='get',command=lambda:self._Member__updateTable(table,default_value)).grid(row=1,column=0,sticky='')
 
         def __validateMember(self,member_name,password,role):
             global database
@@ -105,6 +108,15 @@ class Admin(Tk):
 
         def __clearFrame(self,frame):
             pass
+
+        def __updateTable(self,table,default_value):
+            for item in table.get_children():
+                table.delete(item)
+            role = default_value.get()
+            if role == 'all':
+                role = '*'
+            for value in database._Database__getUser(role=role):
+                table.insert('', 'end', values=value)
 
     class Database:
         def __init__(self):
@@ -133,7 +145,6 @@ class Admin(Tk):
                 sql = f"select * from user"
                 if role!='*':
                     sql+=f" where role='{role}'"
-                print(sql)
                 self.cursor.execute(sql)
                 return self.cursor.fetchall()
             except OperationalError as oe:
