@@ -20,7 +20,7 @@ class Admin(Tk):
         right_frame.pack(fill='y',side='left')
         #member button
         member_add=ImageTk.PhotoImage(image=Image.open('icon/add.png').resize((100, 100)))
-        member_btn=Button(left_frame,image=member_add,activebackground='green',relief='solid')
+        member_btn=Button(left_frame,image=member_add,relief='solid')
         member_btn.pack()
         member_btn.bind('<Return>',lambda event:member._Member__createMember(right_frame))
         member_btn.bind('<KP_Enter>',lambda event:member._Member__createMember(right_frame))
@@ -29,7 +29,7 @@ class Admin(Tk):
         member_btn.bind('<Button-3>',lambda event:member._Member__createMember(right_frame))
         #update button
         update_img = ImageTk.PhotoImage(Image.open('icon/update.png').resize((100, 100)))
-        update_btn = Button(left_frame, image=update_img,activebackground='green',relief='solid')
+        update_btn = Button(left_frame, image=update_img,relief='solid')
         update_btn.pack()
         update_btn.bind('<Return>', lambda event: member._Member__updateMember(right_frame))
         update_btn.bind('<KP_Enter>', lambda event: member._Member__updateMember(right_frame))
@@ -38,15 +38,15 @@ class Admin(Tk):
         update_btn.bind('<Button-3>', lambda event: member._Member__updateMember(right_frame))
         #patient button
         patient_img = ImageTk.PhotoImage(Image.open('icon/patient.png').resize((100, 100)))
-        patient_btn = Button(left_frame, image=patient_img,activebackground='green',relief='solid')
+        patient_btn = Button(left_frame, image=patient_img,relief='solid')
         patient_btn.pack()
         #appointment button
         appointment_img = ImageTk.PhotoImage(Image.open('icon/appointment.png').resize((100, 100)))
-        appointment_btn = Button(left_frame, image=appointment_img,activebackground='green',relief='solid')
+        appointment_btn = Button(left_frame, image=appointment_img,relief='solid')
         appointment_btn.pack()
         #doctor button
         doctor_img = ImageTk.PhotoImage(Image.open('icon/doctor.png').resize((100, 100)))
-        doctor_btn = Button(left_frame, image=doctor_img,activebackground='green',relief='solid')
+        doctor_btn = Button(left_frame, image=doctor_img,relief='solid')
         doctor_btn.pack()
 
         self.mainloop()
@@ -54,7 +54,7 @@ class Admin(Tk):
 
     class Member:
         def __createMember(self,frame):
-            #self._Member__clearFrame(frame)
+            self._Member__clearFrame(frame)
             Frame(frame,height=150).grid(row=0,column=0)
             Label(frame,text='membername',font=',13,').grid(row=1,column=0,padx=60)
             member_entry=Entry(frame)
@@ -78,6 +78,7 @@ class Admin(Tk):
 
         def __updateMember(self,frame):
             #print(database._Database__get(role='doctor'))
+            self._Member__clearFrame(frame)
             try:
                 cols=list(zip(*database._Database__getHeader(table_name='user')))[1]
             except IndexError as ie:
@@ -91,9 +92,30 @@ class Admin(Tk):
                     table.heading(value,text=value)
                 self._Member__updateTable(table, default_value)
                 table.grid(row=0,column=0)
+            down_frame=Frame(frame)
+            down_frame.grid(row=1,column=0)
+            OptionMenu(down_frame,default_value,*('all','appointment','doctor')).grid(row=0,column=0)
+            #get button
+            get_button=Button(down_frame,text='get')
+            get_button.bind('<Return>',lambda x:self._Member__updateTable(table,default_value))
+            get_button.bind('<KP_Enter>',lambda x:self._Member__updateTable(table,default_value))
+            get_button.bind('<space>',lambda x:self._Member__updateTable(table,default_value))
+            get_button.bind('<Button-1>', lambda x:self._Member__updateTable(table,default_value))
+            get_button.bind('<Button-3>', lambda x:self._Member__updateTable(table,default_value))
+            get_button.grid(row=0, column=1)
+            #delete button
+            delete_button = Button(down_frame, text='delete')
+            delete_button.bind('<Return>', lambda x: self._Member__deleteMember(frame,table,default_value))
+            delete_button.bind('<KP_Enter>', lambda x: self._Member__deleteMember(frame,table,default_value))
+            delete_button.bind('<space>', lambda x: self._Member__deleteMember(frame,table,default_value))
+            delete_button.bind('<Button-1>', lambda x: self._Member__deleteMember(frame,table,default_value))
+            delete_button.bind('<Button-3>', lambda x: self._Member__deleteMember(frame,table,default_value))
+            delete_button.grid(row=0, column=2)
 
-            OptionMenu(frame,default_value,*('all','appointment','doctor')).grid(row=1,column=0,sticky='w')
-            Button(frame,text='get',command=lambda:self._Member__updateTable(table,default_value)).grid(row=1,column=0,sticky='')
+        def __deleteMember(self,frame,table,default_value):
+            for user in table.selection():
+                database._Database__delete(table.item(user,'values')[0])
+                self._Member__updateTable(table, default_value)
 
         def __validateMember(self,member_name,password,role):
             global database
@@ -107,7 +129,10 @@ class Admin(Tk):
             database._Database__insert(member_name,password,role)
 
         def __clearFrame(self,frame):
-            pass
+            frame_child=frame.winfo_children()
+            if frame_child:
+                for child in frame_child:
+                    child.destroy()
 
         def __updateTable(self,table,default_value):
             for item in table.get_children():
@@ -135,7 +160,17 @@ class Admin(Tk):
 
         def __insert(self,member_name,password,role):
             try:
-                self.cursor.execute(f"insert into user(user_name,password,role) values('{member_name}','{password}','{role}')")
+                if member_name:
+                    self.cursor.execute(f"insert into user(user_name,password,role) values('{member_name}','{password}','{role}')")
+                    self.database.commit()
+                else:
+                    showwarning('membername',"enter member name first")
+            except OperationalError as oe:
+                stderr.write(str(oe)+'\n')
+
+        def __delete(self,member_sl):
+            try:
+                self.cursor.execute(f"delete from user where sl='{member_sl}'")
                 self.database.commit()
             except OperationalError as oe:
                 stderr.write(str(oe)+'\n')
@@ -162,4 +197,5 @@ class Admin(Tk):
 
 database=Admin.Database()
 member=Admin.Member()
+###testing code below delete when development complete
 Admin()
