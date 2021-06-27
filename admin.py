@@ -188,7 +188,6 @@ class Admin(Tk):
             create_btn.bind('<Button-3>', lambda x: self._Member__validateMember(member_entry, password_entry, default_value))
 
         def __updateMember(self,frame):
-            #print(database._Database__get(role='doctor'))
             self._Member__clearFrame(frame)
             try:
                 cols=list(zip(*database._Database__getHeader(table_name='user')))[1]
@@ -319,15 +318,15 @@ class Admin(Tk):
 
         def __createDoctorTable(self):
             try:
-                self.cursor.execute("create table doctor(sl integer primary key autoincrement,name varchar2(30) unique,specialize_in varchar2(20),timing varchar2(20)),days varchar2(20)")
+                self.cursor.execute("create table doctor(sl integer primary key autoincrement,name varchar2(30) unique,specialize_in varchar2(20),timing varchar2(20))")
                 return True
             except OperationalError as oe:
-                stderr.write(str(oe)+'\n2')
+                stderr.write(str(oe)+'\n')
             return False
 
         def __createAppointmentTable(self):
             try:
-                self.cursor.execute("create table appointment(sl integer primary key autoincrement,first_time_visit varchar2(3),name varchar2(30),phone varchar2(15)),email varchar2(30),appointment_date varchar2(15),med_list text")
+                self.cursor.execute("create table appointment(sl integer primary key autoincrement,first_time_visit varchar2(3),name varchar2(30),phone varchar2(15),email varchar2(30),appointment_date varchar2(15))")
                 return True
             except OperationalError as oe:
                 stderr.write(str(oe)+'\n4')
