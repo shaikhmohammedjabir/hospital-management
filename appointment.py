@@ -102,5 +102,4 @@ class Appointment(Tk):
     def __clearFrame(self,frame):
         for child in frame.winfo_children():
             child.destroy()
-
 Appointment()

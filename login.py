@@ -2,6 +2,8 @@
 from tkinter import Tk,Label,Button,Entry,PhotoImage
 from tkinter.messagebox import showinfo
 from sqlite3 import connect,OperationalError
+from appointment import Appointment
+from doctor import Doctor
 from datetime import datetime
 from hashlib import sha3_512
 from sys import stderr
@@ -38,15 +40,17 @@ class Login(Tk):
         self.bind('<KP_Enter>',lambda x:self.authenticate(user_name.get(),password.get()))
         self.update(time)
         self.bind('<Escape>',lambda x:self.destroy())
+
         self.mainloop()
 
     def update(self,time):
         time.configure(text=datetime.now())
         time.after(1,lambda:self.update(time))
 
-    def authenticate(self,user_name,user_password):
-        if user_name.lower()=='admin':
-            if sha3_512(bytes(user_password,encoding='utf-8',errors='strict')).hexdigest()=='8e4a8dcb32209514125ccdfe8c2837a2af7a7c74c39c28355113a02f14b47780d654b73d75db7e9232af2db200bbcc9c06e9accc7b461a65225540812359dc72':
+    def authenticate(self,name,password):
+        password=sha3_512(bytes(password,encoding='utf-8',errors='strict')).hexdigest()
+        if name.lower()=='admin':
+            if password=='8e4a8dcb32209514125ccdfe8c2837a2af7a7c74c39c28355113a02f14b47780d654b73d75db7e9232af2db200bbcc9c06e9accc7b461a65225540812359dc72':
                 self.destroy()
                 Admin()
             else:
@@ -56,11 +60,12 @@ class Login(Tk):
         database = connect('database/hospital.db')
         cursor = database.cursor()
         try:
-            cursor.execute(f"select * from user where name='{user_name}' and password='{user_password}'")
-            user=cursor.fetchone()
-            if user:
-            #    return user[-1]
-                print(user)
+            cursor.execute(f"select * from user where user_name='{name}' and password='{password}'")
+            user=cursor.fetchone()[-1]
+            if user=='appointment':
+                Appointment()
+            elif user=='doctor':
+                Doctor()
             else:
                 showinfo("authentication error","user or password not match please contact to admin")
         except OperationalError as oe:
@@ -68,5 +73,5 @@ class Login(Tk):
         finally:
             cursor.close()
             database.close()
-
-Login()
+if __name__ == '__main__':
+    Login()

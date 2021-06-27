@@ -1,11 +1,13 @@
 
 from tkinter import Tk,Frame,Label,Button,Entry,OptionMenu,StringVar
-from tkinter.messagebox import showwarning
+from tkinter.messagebox import showwarning,showinfo
 from tkinter.ttk import Treeview
 from sqlite3 import connect,OperationalError
 from PIL import Image,ImageTk
 from hashlib import sha3_512
+from shutil import copy
 from sys import stderr
+from os import path,remove
 
 class Admin(Tk):
     def __init__(self):
@@ -37,21 +39,129 @@ class Admin(Tk):
         update_btn.bind('<space>', lambda event: member._Member__updateMember(right_frame))
         update_btn.bind('<Button-1>', lambda event: member._Member__updateMember(right_frame))
         update_btn.bind('<Button-3>', lambda event: member._Member__updateMember(right_frame))
-        #patient button
-        patient_img = ImageTk.PhotoImage(Image.open('icon/patient.png').resize((100, 100)))
-        patient_btn = Button(left_frame, image=patient_img,relief='solid')
-        patient_btn.pack()
-        #appointment button
-        appointment_img = ImageTk.PhotoImage(Image.open('icon/appointment.png').resize((100, 100)))
-        appointment_btn = Button(left_frame, image=appointment_img,relief='solid')
-        appointment_btn.pack()
+        #database checking
+        database_check_img = ImageTk.PhotoImage(Image.open('icon/database_checking.png').resize((100, 100)))
+        database_check_btn = Button(left_frame, image=database_check_img,relief='solid')
+        database_check_btn.pack()
+        database_check_btn.bind('<Return>', lambda event: maintainance._Maintainance__checkDatabaseUser(right_frame))
+        database_check_btn.bind('<KP_Enter>', lambda event: maintainance._Maintainance__checkDatabaseUser(right_frame))
+        database_check_btn.bind('<space>', lambda event: maintainance._Maintainance__checkDatabaseUser(right_frame))
+        database_check_btn.bind('<Button-1>', lambda event: maintainance._Maintainance__checkDatabaseUser(right_frame))
+        database_check_btn.bind('<Button-3>', lambda event: maintainance._Maintainance__checkDatabaseUser(right_frame))
+        #database maintainance
+        database_maintain_img = ImageTk.PhotoImage(Image.open('icon/database_maintainance.png').resize((100, 100)))
+        database_maintain_btn = Button(left_frame, image=database_maintain_img,relief='solid')
+        database_maintain_btn.pack()
+        database_maintain_btn.bind('<Return>', lambda event: maintainance._Maintainance__maintainDatabase(right_frame))
+        database_maintain_btn.bind('<KP_Enter>', lambda event: maintainance._Maintainance__maintainDatabase(right_frame))
+        database_maintain_btn.bind('<space>', lambda event: maintainance._Maintainance__maintainDatabase(right_frame))
+        database_maintain_btn.bind('<Button-1>', lambda event: maintainance._Maintainance__maintainDatabase(right_frame))
+        database_maintain_btn.bind('<Button-3>', lambda event: maintainance._Maintainance__maintainDatabase(right_frame))
         #doctor button
-        doctor_img = ImageTk.PhotoImage(Image.open('icon/doctor.png').resize((100, 100)))
-        doctor_btn = Button(left_frame, image=doctor_img,relief='solid')
-        doctor_btn.pack()
+        exit_img = ImageTk.PhotoImage(Image.open('icon/logout_admin.png').resize((100, 100)))
+        exit_btn = Button(left_frame, image=exit_img,relief='solid')
+        exit_btn.pack()
+        exit_btn.bind('<Return>', lambda event: exit("bye admin"))
+        exit_btn.bind('<KP_Enter>', lambda event: exit("bye admin"))
+        exit_btn.bind('<space>', lambda event: exit("bye admin"))
+        exit_btn.bind('<Button-1>', lambda event: exit("bye admin"))
+        exit_btn.bind('<Button-3>', lambda event: exit("bye admin"))
 
         self.mainloop()
 
+    class Maintainance:
+        def __init__(self):
+            if not path.exists('database/hospital.db'):
+                connect('database/hospital.db')
+
+        def __checkDatabaseUser(self,frame):
+            member._Member__clearFrame(frame)
+            Label(frame,text="Check requirement and maintainance\n\n",fg='red',font=',16,').grid(row=0,column=0)
+            check_user_btn=Button(frame,text="check tables",relief='solid')
+            check_user_btn.grid(row=1,column=0)
+            check_user_btn.bind('<Return>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
+            check_user_btn.bind('<KP_Enter>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
+            check_user_btn.bind('<space>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
+            check_user_btn.bind('<Button-1>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
+            check_user_btn.bind('<Button-3>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
+
+        def __checkUser(self,frame,check_user_btn):
+            frame_list=dict()
+            user_list = database._Database__getTables()
+            not_present_user=list(frozenset(['user', 'appointment', 'doctor']).difference(user_list))
+            for index,user in enumerate(not_present_user):
+                Label(frame,text=user,fg='red').grid(row=index+1,column=2)
+            for children in frame.winfo_children():
+                text=children['text']
+                if text in not_present_user:
+                    frame_list[text]=children
+            #logic to check button condition and create undefined table
+            if check_user_btn['text']=="create tables":
+                if 'user' in not_present_user:
+                    if database._Database__createUserTable():
+                        frame_list['user'].configure(fg='green')
+                if 'doctor' in not_present_user:
+                    if database._Database__createDoctorTable():
+                        frame_list['doctor'].configure(fg='green')
+                if 'appointment' in not_present_user:
+                    if database._Database__createAppointmentTable():
+                        frame_list['appointment'].configure(fg='green')
+            check_user_btn.configure(text="create tables")
+
+        def __maintainDatabase(self,frame):
+            member._Member__clearFrame(frame)
+            Frame(frame,height=150).grid(row=0,column=0)
+            backup_label=Label(frame,text="action require?",fg='red')
+            restore_label = Label(frame, text="action require?", fg='red')
+            delete_label = Label(frame, text="action require?", fg='red')
+            backup_label.grid(row=1,column=1)
+            restore_label.grid(row=2,column=1)
+            delete_label.grid(row=3,column=1)
+            #create backup
+            backup_btn=Button(frame,text="backup",relief='solid',width=10)
+            backup_btn.grid(row=1,column=0,padx=100)
+            backup_btn.bind('<Return>', lambda event: self._Maintainance__backupDatabase(backup_label))
+            backup_btn.bind('<KP_Enter>', lambda event: self._Maintainance__backupDatabase(backup_label))
+            backup_btn.bind('<space>', lambda event: self._Maintainance__backupDatabase(backup_label))
+            backup_btn.bind('<Button-1>', lambda event: self._Maintainance__backupDatabase(backup_label))
+            backup_btn.bind('<Button-3>', lambda event: self._Maintainance__backupDatabase(backup_label))
+            #restore backup
+            restore_btn=Button(frame, text="restore", relief='solid',width=10)
+            restore_btn.grid(row=2,column=0)
+            restore_btn.bind('<Return>', lambda event: self._Maintainance__restoreDatabase(restore_label))
+            restore_btn.bind('<KP_Enter>', lambda event: self._Maintainance__restoreDatabase(restore_label))
+            restore_btn.bind('<space>', lambda event: self._Maintainance__restoreDatabase(restore_label))
+            restore_btn.bind('<Button-1>', lambda event: self._Maintainance__restoreDatabase(restore_label))
+            restore_btn.bind('<Button-3>', lambda event: self._Maintainance__restoreDatabase(restore_label))
+            #delete database
+            delete_btn = Button(frame, text="delete", relief='solid',width=10)
+            delete_btn.grid(row=3, column=0)
+            delete_btn.bind('<Return>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+            delete_btn.bind('<KP_Enter>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+            delete_btn.bind('<space>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+            delete_btn.bind('<Button-1>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+            delete_btn.bind('<Button-3>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+
+        def __backupDatabase(self,label):
+            if path.exists('database/hospital.db'):
+                copy('database/hospital.db','database/hospital.db.backup')
+                label.config(text="task completed",fg='green')
+
+        def __restoreDatabase(self,label):
+            try:
+                remove('database/hospital.db')
+            except FileNotFoundError as fnfe:
+                stderr.write(str(fnfe)+'\n')
+            if path.exists('database/hospital.db.backup'):
+                copy('database/hospital.db.backup','database/hospital.db')
+                label.config(text="task completed", fg='green')
+
+        def __deleteDatabase(self,label):
+            try:
+                remove('database/hospital.db')
+                label.config(text="task completed", fg='green')
+            except FileNotFoundError as fnfe:
+                showwarning("file operation",str(fnfe))
 
     class Member:
         def __createMember(self,frame):
@@ -144,6 +254,7 @@ class Admin(Tk):
             for value in database._Database__getUser(role=role):
                 table.insert('', 'end', values=value)
 
+
     class Database:
         def __init__(self):
             self.database=connect('database/hospital.db')
@@ -187,16 +298,48 @@ class Admin(Tk):
                 stderr.write(str(oe)+'\n')
                 return None
 
+        def __getTables(self):
+            user_list=list()
+            self.cursor.execute("SELECT * FROM sqlite_master where type='table'")
+            for user in self.cursor.fetchall():
+                user_list.append(user[1])
+            return user_list
+
         def __getHeader(self,*,table_name):
             self.cursor.execute(f"pragma table_info('{table_name}')")
             return self.cursor.fetchall()
+
+        def __createUserTable(self):
+            try:
+                self.cursor.execute("create table user(sl integer primary key autoincrement,user_name varchar2(30) unique,password varchar2(80),role varchar2(16))")
+                return True
+            except OperationalError as oe:
+                stderr.write(str(oe)+'\n')
+            return False
+
+        def __createDoctorTable(self):
+            try:
+                self.cursor.execute("create table doctor(sl integer primary key autoincrement,name varchar2(30) unique,specialize_in varchar2(20),timing varchar2(20)),days varchar2(20)")
+                return True
+            except OperationalError as oe:
+                stderr.write(str(oe)+'\n2')
+            return False
+
+        def __createAppointmentTable(self):
+            try:
+                self.cursor.execute("create table appointment(sl integer primary key autoincrement,first_time_visit varchar2(3),name varchar2(30),phone varchar2(15)),email varchar2(30),appointment_date varchar2(15),med_list text")
+                return True
+            except OperationalError as oe:
+                stderr.write(str(oe)+'\n4')
+            return False
 
         def __del__(self):
             self.cursor.close()
             self.database.close()
 
 
-database=Admin.Database()
 member=Admin.Member()
+maintainance=Admin.Maintainance()
+database=Admin.Database()
 ###testing code below delete when development complete
 Admin()
