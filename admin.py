@@ -12,6 +12,7 @@ class Admin(Tk):
         super().__init__()
         self.title("admin site")
         self.geometry("800x528")
+        self.resizable(False,False)
         global member
 
         left_frame=Frame(self,bd=1)
