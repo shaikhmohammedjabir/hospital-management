@@ -63,8 +63,10 @@ class Login(Tk):
             cursor.execute(f"select * from user where user_name='{name}' and password='{password}'")
             user=cursor.fetchone()[-1]
             if user=='appointment':
+                self.destroy()
                 Appointment()
             elif user=='doctor':
+                self.destroy()
                 Doctor()
             else:
                 showinfo("authentication error","user or password not match please contact to admin")
