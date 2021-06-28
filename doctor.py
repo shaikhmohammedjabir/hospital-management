@@ -2,6 +2,7 @@
 from tkinter import Tk,Label,Button,Entry,OptionMenu,IntVar,StringVar,Frame
 from tkinter.messagebox import showwarning,showinfo
 from tkinter.ttk import Treeview
+from time import strftime,localtime
 from sqlite3 import connect,OperationalError
 from PIL import Image,ImageTk
 from sys import stderr
@@ -11,7 +12,7 @@ class Doctor(Tk):
     def __init__(self):
         super().__init__()
         self.title("doctor site")
-        self.geometry("800x528")
+        self.geometry("900x528")
         self.resizable(False, False)
         left_frame=Frame(self,bd=1)
         right_frame=Frame(self)
@@ -34,7 +35,7 @@ class Doctor(Tk):
         patient_btn.bind('<space>', lambda event: self._Doctor__patientList(right_frame))
         patient_btn.bind('<Button-1>', lambda event: self._Doctor__patientList(right_frame))
         patient_btn.bind('<Button-3>', lambda event: self._Doctor__patientList(right_frame))
-
+        #mainloop
         self.mainloop()
 
     def __addDoctor(self,frame):
@@ -68,26 +69,25 @@ class Doctor(Tk):
         submit_btn.bind('<Button-1>', lambda event: database._Database__addDoctor(self,frame,doctor_name,doctor_specialized,hour,minute,shift))
         submit_btn.bind('<Button-3>', lambda event: database._Database__addDoctor(doctor_name,doctor_specialized,hour,minute,shift))
 
-
     def __patientList(self,frame):
         self._Doctor__clearFrame(frame)
         try:
-            cols = list(zip(*database._Database__getHeader(table_name='doctor')))[1]
+            cols=('first_visit', 'name', 'doctor_name', 'specialist_on','appointment_date')
         except IndexError as ie:
             stderr.write(str(ie) + '\n')
         else:
-            table = Treeview(frame, columns=cols, show='headings', height=20)
-            for value, size in zip(cols, [50, 240, 300, 100]):
+            table = Treeview(frame, columns=cols, show='headings',height=25)
+            for value, size in zip(cols, [70, 180, 180,180,180]):
                 table.column(value, width=size)
                 table.heading(value, text=value)
-        self._Doctor__updateTable(table)
-        table.grid(row=0, column=0)
-
-    def __updateTable(self, table):
-        for item in table.get_children():
-            table.delete(item)
-        for value in database._Database__getUser():
-            table.insert('', 'end', values=value)
+            table.grid(row=0, column=0)
+            appointee = database._Database__getUser()
+            if appointee:
+                for patient in appointee:
+                    if strftime("%d-%B-%Y",localtime())==patient[-1].split()[-1]:
+                        table.insert('','end',values=patient)
+                return
+            showinfo("patient","no patient for today")
 
     def __clearFrame(self, frame):
         frame_child = frame.winfo_children()
@@ -107,7 +107,7 @@ class Doctor(Tk):
 
         def __getUser(self):
             try:
-                sql = f"select * from appointment"
+                sql = f"select first_time_visit,name,doctor_name,specialist_on,appointment_date from appointment"
                 self.cursor.execute(sql)
                 return self.cursor.fetchall()
             except OperationalError as oe:
@@ -135,4 +135,3 @@ class Doctor(Tk):
 
 
 database=Doctor.Database()
-Doctor()
