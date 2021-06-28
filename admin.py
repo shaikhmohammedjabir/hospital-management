@@ -76,7 +76,7 @@ class Admin(Tk):
 
         def __checkDatabaseUser(self,frame):
             member._Member__clearFrame(frame)
-            Label(frame,text="Check requirement and maintainance\n\n",fg='red',font=',16,').grid(row=0,column=0)
+            Label(frame,text="Check requirement and maintainance\n\n",fg='green',font=',16,').grid(row=0,column=0)
             check_user_btn=Button(frame,text="check tables",relief='solid')
             check_user_btn.grid(row=1,column=0)
             check_user_btn.bind('<Return>', lambda event: self._Maintainance__checkUser(frame,check_user_btn))
@@ -89,6 +89,9 @@ class Admin(Tk):
             frame_list=dict()
             user_list = database._Database__getTables()
             not_present_user=list(frozenset(['user', 'appointment', 'doctor']).difference(user_list))
+            if not not_present_user:
+                Label(frame, text="all tables are satisfied", fg='green').grid(row=1,column=2)
+                return
             for index,user in enumerate(not_present_user):
                 Label(frame,text=user,fg='red').grid(row=index+1,column=2)
             for children in frame.winfo_children():
@@ -111,15 +114,24 @@ class Admin(Tk):
         def __maintainDatabase(self,frame):
             member._Member__clearFrame(frame)
             Frame(frame,height=150).grid(row=0,column=0)
+            create_label = Label(frame, text="action require?", fg='red')
             backup_label=Label(frame,text="action require?",fg='red')
             restore_label = Label(frame, text="action require?", fg='red')
             delete_label = Label(frame, text="action require?", fg='red')
-            backup_label.grid(row=1,column=1)
-            restore_label.grid(row=2,column=1)
-            delete_label.grid(row=3,column=1)
+            create_label.grid(row=1, column=1)
+            backup_label.grid(row=2,column=1)
+            restore_label.grid(row=3,column=1)
+            delete_label.grid(row=4,column=1)
+            create_btn=Button(frame,text="create",relief='solid',width=10)
+            create_btn.grid(row=1, column=0, padx=100)
+            create_btn.bind('<Return>', lambda event: self._Maintainance__createDatabase(create_label))
+            create_btn.bind('<KP_Enter>', lambda event: self._Maintainance__createDatabase(create_label))
+            create_btn.bind('<space>', lambda event: self._Maintainance__createDatabase(create_label))
+            create_btn.bind('<Button-1>', lambda event: self._Maintainance__createDatabase(create_label))
+            create_btn.bind('<Button-3>', lambda event: self._Maintainance__createDatabase(create_label))
             #create backup
             backup_btn=Button(frame,text="backup",relief='solid',width=10)
-            backup_btn.grid(row=1,column=0,padx=100)
+            backup_btn.grid(row=2,column=0,padx=100)
             backup_btn.bind('<Return>', lambda event: self._Maintainance__backupDatabase(backup_label))
             backup_btn.bind('<KP_Enter>', lambda event: self._Maintainance__backupDatabase(backup_label))
             backup_btn.bind('<space>', lambda event: self._Maintainance__backupDatabase(backup_label))
@@ -127,7 +139,7 @@ class Admin(Tk):
             backup_btn.bind('<Button-3>', lambda event: self._Maintainance__backupDatabase(backup_label))
             #restore backup
             restore_btn=Button(frame, text="restore", relief='solid',width=10)
-            restore_btn.grid(row=2,column=0)
+            restore_btn.grid(row=3,column=0)
             restore_btn.bind('<Return>', lambda event: self._Maintainance__restoreDatabase(restore_label))
             restore_btn.bind('<KP_Enter>', lambda event: self._Maintainance__restoreDatabase(restore_label))
             restore_btn.bind('<space>', lambda event: self._Maintainance__restoreDatabase(restore_label))
@@ -135,12 +147,19 @@ class Admin(Tk):
             restore_btn.bind('<Button-3>', lambda event: self._Maintainance__restoreDatabase(restore_label))
             #delete database
             delete_btn = Button(frame, text="delete", relief='solid',width=10)
-            delete_btn.grid(row=3, column=0)
+            delete_btn.grid(row=4, column=0)
             delete_btn.bind('<Return>', lambda event: self._Maintainance__deleteDatabase(delete_label))
             delete_btn.bind('<KP_Enter>', lambda event: self._Maintainance__deleteDatabase(delete_label))
             delete_btn.bind('<space>', lambda event: self._Maintainance__deleteDatabase(delete_label))
             delete_btn.bind('<Button-1>', lambda event: self._Maintainance__deleteDatabase(delete_label))
             delete_btn.bind('<Button-3>', lambda event: self._Maintainance__deleteDatabase(delete_label))
+
+        def __createDatabase(self,label):
+            if not path.exists('database/hospital.db'):
+                connect('database/hospital.db')
+                label.config(text="task completed", fg='green')
+                return
+            label.config(text="database exists", fg='green')
 
         def __backupDatabase(self,label):
             if path.exists('database/hospital.db'):
@@ -160,8 +179,8 @@ class Admin(Tk):
             try:
                 remove('database/hospital.db')
                 label.config(text="task completed", fg='green')
-            except FileNotFoundError as fnfe:
-                showwarning("file operation",str(fnfe))
+            except FileNotFoundError:
+                showwarning("file operation","no database to delete")
 
     class Member:
         def __createMember(self,frame):
@@ -181,11 +200,11 @@ class Admin(Tk):
             role_value.grid(row=3,column=1)
             create_btn=Button(frame,text='create',activebackground='green')
             create_btn.grid(row=4,column=1,sticky='e')
-            create_btn.bind('<Return>',lambda x:self._Member__validateMember(member_entry,password_entry,default_value))
-            create_btn.bind('<KP_Enter>',lambda x:self._Member__validateMember(member_entry,password_entry,default_value))
-            create_btn.bind('<space>',lambda x:self._Member__validateMember(member_entry,password_entry,default_value))
-            create_btn.bind('<Button-1>', lambda x: self._Member__validateMember(member_entry, password_entry, default_value))
-            create_btn.bind('<Button-3>', lambda x: self._Member__validateMember(member_entry, password_entry, default_value))
+            create_btn.bind('<Return>',lambda x:self._Member__validateMember(frame,member_entry,password_entry,default_value))
+            create_btn.bind('<KP_Enter>',lambda x:self._Member__validateMember(frame,member_entry,password_entry,default_value))
+            create_btn.bind('<space>',lambda x:self._Member__validateMember(frame,member_entry,password_entry,default_value))
+            create_btn.bind('<Button-1>', lambda x: self._Member__validateMember(frame,member_entry, password_entry, default_value))
+            create_btn.bind('<Button-3>', lambda x: self._Member__validateMember(frame,member_entry, password_entry, default_value))
 
         def __updateMember(self,frame):
             self._Member__clearFrame(frame)
@@ -227,7 +246,7 @@ class Admin(Tk):
                 database._Database__delete(table.item(user,'values')[0])
                 self._Member__updateTable(table, default_value)
 
-        def __validateMember(self,member_name,password,role):
+        def __validateMember(self,frame,member_name,password,role):
             global database
             member_name=member_name.get()
             password=sha3_512(bytes(password.get(),encoding='utf-8',errors='strict')).hexdigest()
@@ -236,7 +255,7 @@ class Admin(Tk):
             if database._Database__enquiry(member_name):
                 showwarning('member',"member already exists use unique name")
                 return
-            database._Database__insert(member_name,password,role)
+            database._Database__insert(frame,member_name,password,role)
 
         def __clearFrame(self,frame):
             frame_child=frame.winfo_children()
@@ -269,15 +288,18 @@ class Admin(Tk):
                 stderr.write(str(oe)+'\n')
             return False
 
-        def __insert(self,member_name,password,role):
+        def __insert(self,frame,member_name,password,role):
             try:
                 if member_name:
                     self.cursor.execute(f"insert into user(user_name,password,role) values('{member_name}','{password}','{role}')")
                     self.database.commit()
+                    showinfo("user","details added successfully!")
+                    member._Member__createMember(frame)
                 else:
                     showwarning('membername',"enter member name first")
             except OperationalError as oe:
                 stderr.write(str(oe)+'\n')
+                showwarning('database', str(oe))
 
         def __delete(self,member_sl):
             try:
@@ -318,7 +340,7 @@ class Admin(Tk):
 
         def __createDoctorTable(self):
             try:
-                self.cursor.execute("create table doctor(sl integer primary key autoincrement,name varchar2(30) unique,specialize_in varchar2(20),timing varchar2(20))")
+                self.cursor.execute("create table doctor(sl integer primary key autoincrement,name varchar2(30),specialize_in varchar2(20),timing varchar2(20))")
                 return True
             except OperationalError as oe:
                 stderr.write(str(oe)+'\n')
@@ -326,7 +348,7 @@ class Admin(Tk):
 
         def __createAppointmentTable(self):
             try:
-                self.cursor.execute("create table appointment(sl integer primary key autoincrement,first_time_visit varchar2(3),name varchar2(30),phone varchar2(15),email varchar2(30),appointment_date varchar2(15))")
+                self.cursor.execute("create table appointment(sl integer primary key autoincrement,first_time_visit varchar2(3),name varchar2(30),phone varchar2(15),email varchar2(30),appointment_date varchar2(15),doctor_name varchar2(20),specialist_on varchar2(20))")
                 return True
             except OperationalError as oe:
                 stderr.write(str(oe)+'\n4')
@@ -340,5 +362,3 @@ class Admin(Tk):
 member=Admin.Member()
 maintainance=Admin.Maintainance()
 database=Admin.Database()
-###testing code below delete when development complete
-Admin()
